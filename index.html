@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100 Yard Flush - Football Player Racing Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e5128 0%, #4e9f3d 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .screen {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1e5128;
+            font-size: 3em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .setup-form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1em;
+            border: 2px solid #4e9f3d;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #1e5128;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1em;
+            border: 2px solid #4e9f3d;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #1e5128;
+        }
+
+        .player-name-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .player-color-indicator {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .range-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+            background: #4e9f3d;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background: #1e5128;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #game-screen {
+            padding: 20px;
+        }
+
+        .field-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            margin: 20px auto;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .field-background {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .race-track {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .player-lane {
+            position: absolute;
+            width: 100%;
+            height: 16.66%;
+            left: 0;
+        }
+
+        .player-lane:nth-child(1) { top: 0%; }
+        .player-lane:nth-child(2) { top: 16.66%; }
+        .player-lane:nth-child(3) { top: 33.32%; }
+        .player-lane:nth-child(4) { top: 49.98%; }
+        .player-lane:nth-child(5) { top: 66.64%; }
+        .player-lane:nth-child(6) { top: 83.30%; }
+
+        .player {
+            position: absolute;
+            left: 5%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 80px;
+            height: 80px;
+            transition: left 0.05s linear;
+        }
+
+        .player img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .effect {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            pointer-events: none;
+            animation: fadeOut 2.5s forwards;
+        }
+
+        .effect img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1.5);
+            }
+        }
+
+        .leaderboard {
+            max-width: 600px;
+            margin: 30px auto;
+        }
+
+        .leaderboard-item {
+            background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .leaderboard-item.first {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            transform: scale(1.05);
+        }
+
+        .leaderboard-item.second {
+            background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+        }
+
+        .leaderboard-item.third {
+            background: linear-gradient(135deg, #cd7f32 0%, #e6a157 100%);
+        }
+
+        .rank {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+            min-width: 50px;
+        }
+
+        .player-icon {
+            width: 60px;
+            height: 60px;
+        }
+
+        .player-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .player-stats {
+            flex: 1;
+        }
+
+        .player-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .player-details {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .restart-button {
+            margin-top: 30px;
+        }
+
+        .start-button-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+
+        .start-race-button {
+            padding: 30px 60px;
+            font-size: 2.5em;
+            font-weight: bold;
+            background: #ff4444;
+            color: white;
+            border: 5px solid white;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s;
+            animation: pulse 1.5s infinite;
+        }
+
+        .start-race-button:hover {
+            background: #cc0000;
+            transform: scale(1.05);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 10px 30px rgba(255, 68, 68, 0.5);
+            }
+            50% {
+                box-shadow: 0 10px 50px rgba(255, 68, 68, 0.9);
+            }
+        }
+
+        .results-button-container {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+
+        .show-results-button {
+            padding: 20px 40px;
+            font-size: 1.8em;
+            font-weight: bold;
+            background: #ffd700;
+            color: #333;
+            border: 4px solid white;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s;
+            animation: bounce 0.5s infinite alternate;
+        }
+
+        .show-results-button:hover {
+            background: #ffed4e;
+            transform: scale(1.05);
+        }
+
+        @keyframes bounce {
+            from {
+                transform: translateY(0);
+            }
+            to {
+                transform: translateY(-10px);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Setup Screen -->
+        <div id="setup-screen" class="screen active">
+            <h1>🏈 100 YARD FLUSH 🚽</h1>
+            <div class="setup-form">
+                <div class="form-group">
+                    <label for="num-players">Number of Players (2-6):</label>
+                    <input type="number" id="num-players" min="2" max="6" value="6" onchange="updatePlayerNames()">
+                </div>
+                <div class="form-group" id="player-names-section">
+                    <label>Player Names:</label>
+                    <div id="player-names-container"></div>
+                </div>
+                <div class="form-group">
+                    <label>Poops Range (slow downs):</label>
+                    <div class="range-inputs">
+                        <div>
+                            <label for="min-poops">Min:</label>
+                            <input type="number" id="min-poops" min="0" max="20" value="6">
+                        </div>
+                        <div>
+                            <label for="max-poops">Max:</label>
+                            <input type="number" id="max-poops" min="0" max="20" value="10">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Farts Range (speed boosts):</label>
+                    <div class="range-inputs">
+                        <div>
+                            <label for="min-farts">Min:</label>
+                            <input type="number" id="min-farts" min="0" max="10" value="1">
+                        </div>
+                        <div>
+                            <label for="max-farts">Max:</label>
+                            <input type="number" id="max-farts" min="0" max="10" value="3">
+                        </div>
+                    </div>
+                </div>
+                <button onclick="startRace()">START RACE!</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <h1>🏈 100 YARD FLUSH 🚽</h1>
+            <div class="field-container">
+                <img src="images/football_field.svg" alt="Football Field" class="field-background">
+                <div class="race-track" id="race-track"></div>
+                <div id="start-button-container" class="start-button-container">
+                    <button class="start-race-button" onclick="beginRace()">GO!</button>
+                </div>
+                <div id="results-button-container" class="results-button-container hidden">
+                    <button class="show-results-button" onclick="showLeaderboard()">VIEW RESULTS</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Screen -->
+        <div id="leaderboard-screen" class="screen">
+            <h1>🏆 RACE RESULTS 🏆</h1>
+            <div class="leaderboard" id="leaderboard"></div>
+            <button class="restart-button" onclick="resetGame()">RACE AGAIN!</button>
+        </div>
+    </div>
+
+    <script>
+        const playerColors = ['black', 'blue', 'brown', 'green', 'purple', 'red'];
+        let gameState = {
+            numPlayers: 6,
+            minPoops: 6,
+            maxPoops: 10,
+            minFarts: 1,
+            maxFarts: 3,
+            players: [],
+            playerNames: [],
+            raceInProgress: false,
+            finishOrder: []
+        };
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function random(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function randomFloat(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function updatePlayerNames() {
+            const numPlayers = parseInt(document.getElementById('num-players').value);
+            const container = document.getElementById('player-names-container');
+            container.innerHTML = '';
+
+            for (let i = 0; i < numPlayers; i++) {
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'player-name-input';
+
+                const colorIndicator = document.createElement('img');
+                colorIndicator.className = 'player-color-indicator';
+                colorIndicator.src = `images/player_${playerColors[i]}.png`;
+                colorIndicator.alt = playerColors[i];
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `player-name-${i}`;
+                input.placeholder = `Player ${i + 1} (${playerColors[i].toUpperCase()})`;
+                input.value = gameState.playerNames[i] || '';
+
+                nameDiv.appendChild(colorIndicator);
+                nameDiv.appendChild(input);
+                container.appendChild(nameDiv);
+            }
+        }
+
+        function startRace() {
+            // Get user inputs
+            gameState.numPlayers = parseInt(document.getElementById('num-players').value);
+            gameState.minPoops = parseInt(document.getElementById('min-poops').value);
+            gameState.maxPoops = parseInt(document.getElementById('max-poops').value);
+            gameState.minFarts = parseInt(document.getElementById('min-farts').value);
+            gameState.maxFarts = parseInt(document.getElementById('max-farts').value);
+
+            // Get player names
+            gameState.playerNames = [];
+            for (let i = 0; i < gameState.numPlayers; i++) {
+                const nameInput = document.getElementById(`player-name-${i}`);
+                const name = nameInput && nameInput.value.trim() ? nameInput.value.trim() : `Player ${i + 1}`;
+                gameState.playerNames.push(name);
+            }
+
+            // Validate inputs
+            if (gameState.numPlayers < 2 || gameState.numPlayers > 6) {
+                alert('Please select 2-6 players');
+                return;
+            }
+            if (gameState.minPoops > gameState.maxPoops) {
+                alert('Min poops cannot be greater than max poops');
+                return;
+            }
+            if (gameState.minFarts > gameState.maxFarts) {
+                alert('Min farts cannot be greater than max farts');
+                return;
+            }
+
+            // Initialize players
+            initializePlayers();
+
+            // Show game screen with players at starting position
+            showScreen('game-screen');
+
+            // Show the GO button, hide results button
+            document.getElementById('start-button-container').classList.remove('hidden');
+            document.getElementById('results-button-container').classList.add('hidden');
+        }
+
+        function beginRace() {
+            // Hide the start button
+            document.getElementById('start-button-container').classList.add('hidden');
+
+            // Start the race
+            runRace();
+        }
+
+        function initializePlayers() {
+            gameState.players = [];
+            const raceTrack = document.getElementById('race-track');
+            raceTrack.innerHTML = '';
+
+            for (let i = 0; i < gameState.numPlayers; i++) {
+                const player = {
+                    id: i,
+                    color: playerColors[i],
+                    name: gameState.playerNames[i] || `Player ${i + 1}`,
+                    baseSpeed: randomFloat(0.08, 0.20), // pixels per frame (slower for better viewing)
+                    currentSpeed: 0,
+                    position: 5, // start at 5% from left
+                    poops: random(gameState.minPoops, gameState.maxPoops),
+                    farts: random(gameState.minFarts, gameState.maxFarts),
+                    poopEvents: [],
+                    fartEvents: [],
+                    finished: false,
+                    finishTime: 0,
+                    isStopped: false,
+                    stopEndTime: 0
+                };
+
+                // Generate random positions for poops and farts along the track
+                for (let p = 0; p < player.poops; p++) {
+                    player.poopEvents.push(random(20, 85));
+                }
+                for (let f = 0; f < player.farts; f++) {
+                    player.fartEvents.push(random(20, 85));
+                }
+
+                // Sort events
+                player.poopEvents.sort((a, b) => a - b);
+                player.fartEvents.sort((a, b) => a - b);
+
+                gameState.players.push(player);
+
+                // Create player lane
+                const lane = document.createElement('div');
+                lane.className = 'player-lane';
+                lane.id = `lane-${i}`;
+
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player';
+                playerDiv.id = `player-${i}`;
+                playerDiv.innerHTML = `<img src="images/player_${player.color}.png" alt="Player ${i + 1}">`;
+
+                lane.appendChild(playerDiv);
+                raceTrack.appendChild(lane);
+            }
+        }
+
+        function runRace() {
+            gameState.raceInProgress = true;
+            let frameCount = 0;
+            const finishLine = 90; // 90% from left
+            let finishOrder = [];
+
+            function gameLoop() {
+                if (!gameState.raceInProgress) return;
+
+                frameCount++;
+                let allFinished = true;
+
+                gameState.players.forEach(player => {
+                    if (player.finished) return;
+
+                    allFinished = false;
+
+                    // Check if player is currently stopped (pooping)
+                    if (player.isStopped) {
+                        if (Date.now() >= player.stopEndTime) {
+                            player.isStopped = false;
+                            player.currentSpeed = player.baseSpeed;
+                        } else {
+                            // Still stopped, don't move
+                            return;
+                        }
+                    }
+
+                    // Check for poop events
+                    if (player.poopEvents.length > 0 && player.position >= player.poopEvents[0]) {
+                        player.poopEvents.shift();
+                        player.isStopped = true;
+                        player.stopEndTime = Date.now() + randomFloat(1000, 2000); // Stop for 1-2 seconds
+                        player.currentSpeed = 0;
+                        showEffect(player.id, player.position, 'poop');
+                        return; // Don't move this frame
+                    }
+
+                    // Check for fart events
+                    if (player.fartEvents.length > 0 && player.position >= player.fartEvents[0]) {
+                        player.fartEvents.shift();
+                        player.currentSpeed = player.baseSpeed * randomFloat(1.8, 2.5); // Quick burst of speed
+                        showEffect(player.id, player.position, 'fart');
+                        setTimeout(() => {
+                            if (!player.finished && !player.isStopped) {
+                                player.currentSpeed = player.baseSpeed;
+                            }
+                        }, randomFloat(200, 400)); // Very short burst: 0.2-0.4 seconds
+                    } else if (player.currentSpeed === 0) {
+                        player.currentSpeed = player.baseSpeed;
+                    }
+
+                    // Move player
+                    player.position += player.currentSpeed;
+
+                    // Check if finished
+                    if (player.position >= finishLine) {
+                        player.position = finishLine;
+                        player.finished = true;
+                        player.finishTime = frameCount;
+                        finishOrder.push(player);
+                    }
+
+                    // Update player position on screen
+                    const playerElement = document.getElementById(`player-${player.id}`);
+                    if (playerElement) {
+                        playerElement.style.left = player.position + '%';
+                    }
+                });
+
+                if (allFinished) {
+                    gameState.raceInProgress = false;
+                    gameState.finishOrder = finishOrder;
+                    // Show the results button
+                    setTimeout(() => {
+                        document.getElementById('results-button-container').classList.remove('hidden');
+                    }, 500);
+                } else {
+                    requestAnimationFrame(gameLoop);
+                }
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function showEffect(playerId, position, type) {
+            const lane = document.getElementById(`lane-${playerId}`);
+            const effect = document.createElement('div');
+            effect.className = 'effect';
+            effect.style.left = position + '%';
+            effect.style.top = '50%';
+            effect.style.transform = 'translateY(-50%)';
+
+            const img = type === 'poop' ? 'poop.png' : 'fart_cloud.png';
+            effect.innerHTML = `<img src="images/${img}" alt="${type}">`;
+
+            lane.appendChild(effect);
+
+            setTimeout(() => {
+                effect.remove();
+            }, 2500);
+        }
+
+        function showLeaderboard() {
+            const leaderboard = document.getElementById('leaderboard');
+            leaderboard.innerHTML = '';
+
+            gameState.finishOrder.forEach((player, index) => {
+                const item = document.createElement('div');
+                item.className = 'leaderboard-item';
+
+                if (index === 0) item.classList.add('first');
+                else if (index === 1) item.classList.add('second');
+                else if (index === 2) item.classList.add('third');
+
+                const medals = ['🥇', '🥈', '🥉'];
+                const medal = index < 3 ? medals[index] : '';
+
+                item.innerHTML = `
+                    <div class="rank">${medal} ${index + 1}</div>
+                    <div class="player-icon">
+                        <img src="images/player_${player.color}.png" alt="Player">
+                    </div>
+                    <div class="player-stats">
+                        <div class="player-name">${player.name} (${player.color.toUpperCase()})</div>
+                        <div class="player-details">
+                            💩 Poops: ${player.poops} | 💨 Farts: ${player.farts} |
+                            ⚡ Speed: ${player.baseSpeed.toFixed(2)}
+                        </div>
+                    </div>
+                `;
+
+                leaderboard.appendChild(item);
+            });
+
+            showScreen('leaderboard-screen');
+        }
+
+        function resetGame() {
+            gameState.raceInProgress = false;
+            showScreen('setup-screen');
+        }
+
+        // Initialize player names on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            updatePlayerNames();
+        });
+    </script>
+</body>
+</html>
